@@ -136,3 +136,18 @@ cd /Users/dhareva/Books/2026_MP/codes/praktikum/ch07_starter
 ./gradlew installDebug
 adb shell am start -n com.example.ch07/.MainActivity
 ```
+
+---
+
+## Catatan Pengerjaan
+
+- Urutan migrasi mengikuti urutan pengerjaan: **1 → 2** (kolom `tags`, Tugas 4)
+  lalu **2 → 3** (kolom `updatedAt`, Tugas 3). Skema tiap versi diekspor ke
+  `app/schemas/com.example.ch07.data.NoteDatabase/`.
+- Snackbar undo memakai `SnackbarDuration.Short` secara eksplisit. Default
+  `showSnackbar` saat ada `actionLabel` ternyata `Indefinite`, jadi snackbar
+  tidak pernah hilang sendiri dan `onUndoDismissed()` tidak pernah terpanggil.
+- Tes tambahan untuk undo hapus, filter tag, dan `updatedAt` sudah ditambahkan
+  ke `NoteListViewModelTest` dan `NoteEditViewModelTest` (total 28 tes hijau).
+- Bukti jalan di emulator (migrasi data lama, snackbar undo, tag & filter chip)
+  ada di folder `screenshots/`.
