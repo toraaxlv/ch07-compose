@@ -22,8 +22,7 @@ data class NoteListUiState(
     val isLoading: Boolean = false,
     val notes: List<NoteEntity> = emptyList(),
     val query: String = "",
-    // TODO [T2.1] Tambahkan `recentlyDeleted: NoteEntity? = null` (catatan yang baru
-    //   dihapus, untuk Snackbar "Batalkan").
+    val recentlyDeleted: NoteEntity? = null,
     // TODO [T4.6] Tambahkan `availableTags: List<String> = emptyList()` dan
     //   `selectedTag: String? = null` untuk filter chip.
     val errorMessage: String? = null
@@ -42,7 +41,8 @@ class NoteListViewModel(
     // Teks yang sedang diketik (langsung tampil di TextField)
     private val queryText = MutableStateFlow("")
     private val loadError = MutableStateFlow<String?>(null)
-    // TODO [T2.2] Tambahkan `recentlyDeleted = MutableStateFlow<NoteEntity?>(null)`.
+    // Catatan yang baru dihapus, ditahan dulu supaya bisa dikembalikan (undo)
+    private val recentlyDeleted = MutableStateFlow<NoteEntity?>(null)
     // TODO [T4.6] Tambahkan `selectedTag = MutableStateFlow<String?>(null)`.
 
     // Query ke database ditunda 300 ms setelah pengguna berhenti mengetik
@@ -61,13 +61,18 @@ class NoteListViewModel(
         }
 
     // UiState DITURUNKAN dari beberapa sumber (pola Chapter 6).
-    // TODO [T2.2][T4.6] Tambahkan sumber baru (recentlyDeleted, selectedTag, dan
-    //   `repository.getAllNotes()` untuk daftar tag) ke combine ini. combine
-    //   menerima sampai 5 flow bertipe; gabungkan dua flow dulu jika perlu.
+    // TODO [T4.6] Tambahkan selectedTag dan `repository.getAllNotes()` untuk daftar
+    //   tag ke combine ini. combine menerima sampai 5 flow bertipe; gabungkan dua
+    //   flow dulu jika perlu.
     val uiState: StateFlow<NoteListUiState> = combine(
-        searchResults, queryText, loadError
-    ) { results, query, error ->
-        NoteListUiState(notes = results, query = query, errorMessage = error)
+        searchResults, queryText, loadError, recentlyDeleted
+    ) { results, query, error, deleted ->
+        NoteListUiState(
+            notes = results,
+            query = query,
+            recentlyDeleted = deleted,
+            errorMessage = error
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -78,16 +83,27 @@ class NoteListViewModel(
         queryText.value = newQuery
     }
 
-    // TODO [T2.2] Setelah menghapus, isi recentlyDeleted dengan catatan tersebut.
+    // Catatan disimpan dulu ke recentlyDeleted sebelum Snackbar ditampilkan
     fun deleteNote(note: NoteEntity) {
-        viewModelScope.launch { repository.deleteNote(note) }
+        viewModelScope.launch {
+            repository.deleteNote(note)
+            recentlyDeleted.value = note
+        }
     }
 
-    // TODO [T2.2] Tambahkan `undoDelete()`: kosongkan recentlyDeleted, lalu masukkan
-    //   kembali catatan yang sama lewat repository.insertNote (id sama -> REPLACE,
-    //   sehingga id, pin, dan tag ikut kembali).
-    // TODO [T2.2] Tambahkan `onUndoDismissed()`: Snackbar hilang tanpa dibatalkan,
-    //   cukup kosongkan recentlyDeleted.
+    // Kembalikan catatan yang SAMA: id sama -> REPLACE di DAO, jadi id, pin,
+    // dan tag ikut kembali seperti semula.
+    fun undoDelete() {
+        val note = recentlyDeleted.value ?: return
+        recentlyDeleted.value = null
+        viewModelScope.launch { repository.insertNote(note) }
+    }
+
+    // Snackbar hilang sendiri tanpa dibatalkan: biarkan catatan tetap terhapus
+    fun onUndoDismissed() {
+        recentlyDeleted.value = null
+    }
+
     // TODO [T4.6] Tambahkan `onTagSelected(tag: String?)`: ketuk tag yang sedang aktif
     //   melepas filter; null = "Semua". Tag yang sudah tidak dipakai catatan mana
     //   pun harus otomatis dilepas.

@@ -30,7 +30,8 @@ fun NoteListRoute(
         onAddNote = onAddNote,
         onEditNote = onEditNote,
         onDeleteNote = viewModel::deleteNote,
-        // TODO [T2.4] Teruskan viewModel::undoDelete dan viewModel::onUndoDismissed.
+        onUndoDelete = viewModel::undoDelete,
+        onUndoDismissed = viewModel::onUndoDismissed,
         // TODO [T4.6] Teruskan viewModel::onTagSelected.
         onTogglePin = viewModel::togglePin
     )

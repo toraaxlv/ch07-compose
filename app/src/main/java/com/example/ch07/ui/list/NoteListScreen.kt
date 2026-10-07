@@ -20,9 +20,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -38,17 +45,31 @@ fun NoteListScreen(
     onAddNote: () -> Unit,
     onEditNote: (Int) -> Unit,
     onDeleteNote: (NoteEntity) -> Unit,
-    // TODO [T2.3] Tambahkan parameter onUndoDelete: () -> Unit dan onUndoDismissed: () -> Unit.
+    onUndoDelete: () -> Unit,
+    onUndoDismissed: () -> Unit,
     // TODO [T4.7] Tambahkan parameter onTagSelected: (String?) -> Unit.
     onTogglePin: (NoteEntity) -> Unit
 ) {
-    // TODO [T2.3] Buat SnackbarHostState dan pasang di Scaffold (snackbarHost = ...).
-    //   Gunakan LaunchedEffect(uiState.recentlyDeleted): jika tidak null, tampilkan
-    //   showSnackbar(message = "Catatan dihapus", actionLabel = "Batalkan").
-    //   ActionPerformed -> onUndoDelete(); selain itu -> onUndoDismissed().
-    //   Petunjuk: bungkus callback dengan rememberUpdatedState agar tidak basi.
+    val snackbarHostState = remember { SnackbarHostState() }
+    // rememberUpdatedState: kalau callback berubah, LaunchedEffect tidak memakai
+    // versi basi dari callback lama
+    val currentOnUndoDelete by rememberUpdatedState(onUndoDelete)
+    val currentOnUndoDismissed by rememberUpdatedState(onUndoDismissed)
+
+    // Setiap kali ada catatan baru dihapus, tawarkan "Batalkan"
+    LaunchedEffect(uiState.recentlyDeleted) {
+        if (uiState.recentlyDeleted == null) return@LaunchedEffect
+        val result = snackbarHostState.showSnackbar(
+            message = "Catatan dihapus",
+            actionLabel = "Batalkan"
+        )
+        if (result == SnackbarResult.ActionPerformed) currentOnUndoDelete()
+        else currentOnUndoDismissed()
+    }
+
     Scaffold(
         topBar = { TopAppBar(title = { Text("CatatanKu") }) },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddNote) {
                 Icon(Icons.Filled.Add, contentDescription = "Tambah catatan")

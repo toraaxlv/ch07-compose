@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -84,5 +85,41 @@ class NoteListViewModelTest {
 
         vm.togglePin(repo.current.single()); runCurrent()
         assertFalse(repo.current.single().isPinned)
+    }
+
+    @Test fun `hapus menyimpan catatan yang baru dihapus untuk undo`() = runTest {
+        val target = note(1, "A")
+        val vm = NoteListViewModel(FakeNoteRepository(listOf(target)))
+        start(vm)
+
+        vm.deleteNote(target); runCurrent()
+
+        assertEquals(target, vm.uiState.value.recentlyDeleted)
+    }
+
+    @Test fun `undo delete mengembalikan catatan yang sama`() = runTest {
+        val target = note(1, "A", "isi", pinned = true)
+        val repo = FakeNoteRepository(listOf(target, note(2, "B")))
+        val vm = NoteListViewModel(repo)
+        start(vm)
+
+        vm.deleteNote(target); runCurrent()
+        vm.undoDelete(); runCurrent()
+
+        assertNull(vm.uiState.value.recentlyDeleted)
+        assertEquals("id, pin, dan isi harus kembali persis", target, repo.current.single { it.id == 1 })
+    }
+
+    @Test fun `snackbar diabaikan - catatan tetap terhapus`() = runTest {
+        val target = note(1, "A")
+        val repo = FakeNoteRepository(listOf(target))
+        val vm = NoteListViewModel(repo)
+        start(vm)
+
+        vm.deleteNote(target); runCurrent()
+        vm.onUndoDismissed(); runCurrent()
+
+        assertNull(vm.uiState.value.recentlyDeleted)
+        assertTrue(repo.current.isEmpty())
     }
 }
