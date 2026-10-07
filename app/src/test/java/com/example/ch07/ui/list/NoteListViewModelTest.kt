@@ -173,4 +173,15 @@ class NoteListViewModelTest {
         assertNull(vm.uiState.value.selectedTag)
         assertFalse(vm.uiState.value.isFiltering)
     }
+
+    @Test fun `menyematkan tidak mengubah updatedAt`() = runTest {
+        val n = NoteEntity(id = 1, title = "A", content = "", createdAt = 1_000L, updatedAt = 2_000L)
+        val repo = FakeNoteRepository(listOf(n))
+        val vm = NoteListViewModel(repo)
+        start(vm)
+
+        vm.togglePin(n); runCurrent()
+        assertTrue(repo.current.single().isPinned)
+        assertEquals(2_000L, repo.current.single().updatedAt)
+    }
 }

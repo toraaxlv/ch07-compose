@@ -16,13 +16,18 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
-// TODO [T3.2] Buat Migration berikutnya untuk kolom `updatedAt`
-//   (INTEGER NOT NULL DEFAULT 0), lalu isi catatan lama dengan
-//   UPDATE notes SET updatedAt = createdAt  agar tidak tampil "puluhan tahun lalu".
+// 2 -> 3: kolom updatedAt (T3.2). Catatan lama diisi dari createdAt supaya
+// tidak tampil "puluhan tahun lalu".
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE notes ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("UPDATE notes SET updatedAt = createdAt")
+    }
+}
 
 @Database(
     entities = [NoteEntity::class],
-    version = 2,                 // TODO [T3.2] naikkan lagi setiap skema berubah
+    version = 3,
     exportSchema = true          // JSON skema -> app/schemas/ (lihat build.gradle.kts)
 )
 @TypeConverters(Converters::class)
@@ -45,7 +50,7 @@ abstract class NoteDatabase : RoomDatabase() {
                 )
                     // fallbackToDestructiveMigration MENGHAPUS data pengguna saat
                     // versi naik, jadi pakai migrasi eksplisit
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                     .also { INSTANCE = it }
             }

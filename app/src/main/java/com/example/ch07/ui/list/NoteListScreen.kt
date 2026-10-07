@@ -115,14 +115,15 @@ fun NoteListScreen(
                 uiState.notes.isEmpty() -> CenteredMessage(emptyMessage(uiState))
 
                 else -> {
-                    // TODO [T3.5] Hitung `val now = remember(uiState.notes) { System.currentTimeMillis() }`
-                    //   lalu kirim ke NoteCard(now = now, ...).
+                    // Diambil sekali per perubahan daftar: cukup untuk label relatif
+                    val now = remember(uiState.notes) { System.currentTimeMillis() }
                     LazyColumn(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(uiState.notes, key = { it.id }) { note ->
                             NoteCard(
+                                now = now,
                                 note = note,
                                 onClick = { onEditNote(note.id) },
                                 onDelete = { onDeleteNote(note) },

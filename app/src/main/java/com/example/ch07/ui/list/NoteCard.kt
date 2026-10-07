@@ -23,10 +23,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.ch07.data.NoteEntity
+import com.example.ch07.util.formatRelativeTime
 
 @Composable
 fun NoteCard(
-    // TODO [T3.5] Tambahkan parameter `now: Long` untuk menghitung waktu relatif.
+    now: Long,
     note: NoteEntity,
     onClick: () -> Unit,
     onDelete: () -> Unit,
@@ -76,8 +77,12 @@ fun NoteCard(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
-                // TODO [T3.5] Tampilkan "Diubah ${formatRelativeTime(now, note.updatedAt)}"
-                //   (mis. "Diubah 3 jam lalu") dengan gaya labelSmall.
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Diubah ${formatRelativeTime(now, note.updatedAt)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             Column {
                 IconButton(onClick = onTogglePin) {

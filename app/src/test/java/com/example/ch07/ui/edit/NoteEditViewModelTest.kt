@@ -88,4 +88,29 @@ class NoteEditViewModelTest {
         runCurrent()
         assertEquals("kuliah, ide", vm2.uiState.value.tagsText)
     }
+
+    @Test fun `edit memperbarui updatedAt tapi tidak createdAt`() = runTest {
+        val existing = NoteEntity(id = 3, title = "Lama", content = "isi",
+            createdAt = 1_000L, updatedAt = 1_000L)
+        val repo = FakeNoteRepository(listOf(existing))
+        val vm = NoteEditViewModel(repo, noteId = 3, clock = { 9_000L })
+        runCurrent()
+
+        vm.onTitleChange("Baru")
+        vm.save(); runCurrent()
+
+        val saved = repo.current.single()
+        assertEquals(1_000L, saved.createdAt)
+        assertEquals(9_000L, saved.updatedAt)
+    }
+
+    @Test fun `catatan baru updatedAt sama dengan createdAt`() = runTest {
+        val repo = FakeNoteRepository()
+        val vm = NoteEditViewModel(repo, noteId = 0, clock = { 5_000L })
+
+        vm.onTitleChange("Baru")
+        vm.save(); runCurrent()
+
+        assertEquals(5_000L, repo.current.single().updatedAt)
+    }
 }

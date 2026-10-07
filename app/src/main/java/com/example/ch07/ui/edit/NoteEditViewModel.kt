@@ -81,21 +81,21 @@ class NoteEditViewModel(
             val tags = parseTags(current.tagsText)
             val existing = original
             if (existing == null) {
-                // TODO [T3.4] Isi juga updatedAt = now.
                 repository.insertNote(
                     NoteEntity(
                         title = current.title.trim(),
                         content = current.content.trim(),
                         createdAt = now,
+                        updatedAt = now,
                         tags = tags
                     )
                 )
             } else {
-                // TODO [T3.4] Perbarui updatedAt = now.
                 repository.updateNote(
                     existing.copy(
                         title = current.title.trim(),
                         content = current.content.trim(),
+                        updatedAt = now,
                         tags = tags
                     )
                 )
