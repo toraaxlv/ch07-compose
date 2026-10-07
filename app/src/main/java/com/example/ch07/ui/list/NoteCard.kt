@@ -68,7 +68,14 @@ fun NoteCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                // TODO [T4.8] Tampilkan tag, mis. "#kuliah  #ide", jika note.tags tidak kosong.
+                if (note.tags.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = note.tags.joinToString("  ") { "#$it" },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
                 // TODO [T3.5] Tampilkan "Diubah ${formatRelativeTime(now, note.updatedAt)}"
                 //   (mis. "Diubah 3 jam lalu") dengan gaya labelSmall.
             }

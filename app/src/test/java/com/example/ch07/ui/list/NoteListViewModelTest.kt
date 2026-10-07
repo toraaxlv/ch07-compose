@@ -122,4 +122,55 @@ class NoteListViewModelTest {
         assertNull(vm.uiState.value.recentlyDeleted)
         assertTrue(repo.current.isEmpty())
     }
+
+    private fun tagged(id: Int, title: String, tags: List<String>) =
+        NoteEntity(id = id, title = title, content = "", createdAt = id.toLong(), tags = tags)
+
+    @Test fun `filter tag memilih lalu melepas lagi`() = runTest {
+        val repo = FakeNoteRepository(listOf(
+            tagged(1, "A", listOf("kuliah")), tagged(2, "B", listOf("ide")), tagged(3, "C", emptyList())
+        ))
+        val vm = NoteListViewModel(repo)
+        start(vm)
+
+        assertEquals(listOf("ide", "kuliah"), vm.uiState.value.availableTags)
+        assertFalse(vm.uiState.value.isFiltering)
+
+        vm.onTagSelected("kuliah"); runCurrent()
+        assertEquals(listOf("A"), vm.uiState.value.notes.map { it.title })
+        assertTrue(vm.uiState.value.isFiltering)
+
+        vm.onTagSelected("kuliah"); runCurrent()   // ketuk tag aktif = lepas filter
+        assertNull(vm.uiState.value.selectedTag)
+        assertEquals(3, vm.uiState.value.notes.size)
+    }
+
+    @Test fun `filter tag bekerja bersama pencarian`() = runTest {
+        val repo = FakeNoteRepository(listOf(
+            tagged(1, "Bab Room", listOf("kuliah")), tagged(2, "Kelas", listOf("kuliah")),
+            tagged(3, "Ide", listOf("ide"))
+        ))
+        val vm = NoteListViewModel(repo)
+        start(vm)
+
+        vm.onTagSelected("kuliah")
+        vm.onQueryChange("room")
+        advanceTimeBy(310); runCurrent()
+
+        assertEquals(listOf("Bab Room"), vm.uiState.value.notes.map { it.title })
+    }
+
+    @Test fun `tag yang tidak dipakai lagi otomatis dilepas`() = runTest {
+        val a = tagged(1, "A", listOf("kuliah"))
+        val repo = FakeNoteRepository(listOf(a))
+        val vm = NoteListViewModel(repo)
+        start(vm)
+
+        vm.onTagSelected("kuliah"); runCurrent()
+        vm.deleteNote(a); runCurrent()
+
+        assertTrue(vm.uiState.value.availableTags.isEmpty())
+        assertNull(vm.uiState.value.selectedTag)
+        assertFalse(vm.uiState.value.isFiltering)
+    }
 }

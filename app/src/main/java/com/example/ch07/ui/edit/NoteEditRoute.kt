@@ -30,7 +30,7 @@ fun NoteEditRoute(
         uiState = uiState,
         onTitleChange = viewModel::onTitleChange,
         onContentChange = viewModel::onContentChange,
-        // TODO [T4.5] Teruskan viewModel::onTagsChange.
+        onTagsChange = viewModel::onTagsChange,
         onSave = viewModel::save,
         onNavigateBack = onNavigateBack
     )

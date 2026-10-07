@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ch07.data.NoteEntity
 import com.example.ch07.data.NoteRepository
+import com.example.ch07.util.formatTags
+import com.example.ch07.util.parseTags
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +15,7 @@ import kotlinx.coroutines.launch
 data class NoteEditUiState(
     val title: String = "",
     val content: String = "",
-    // TODO [T4.5] Tambahkan `tagsText: String = ""` (tag diketik dipisah koma, mis. "kuliah, ide").
+    val tagsText: String = "",
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val isSaved: Boolean = false,
@@ -45,8 +47,12 @@ class NoteEditViewModel(
                 if (note == null) {
                     it.copy(isLoading = false, errorMessage = "Catatan tidak ditemukan")
                 } else {
-                    // TODO [T4.5] Isi juga tagsText = formatTags(note.tags).
-                    it.copy(isLoading = false, title = note.title, content = note.content)
+                    it.copy(
+                        isLoading = false,
+                        title = note.title,
+                        content = note.content,
+                        tagsText = formatTags(note.tags)
+                    )
                 }
             }
         }
@@ -58,7 +64,8 @@ class NoteEditViewModel(
     fun onContentChange(value: String) =
         _uiState.update { it.copy(content = value) }
 
-    // TODO [T4.5] Tambahkan `onTagsChange(value: String)` yang memperbarui tagsText.
+    fun onTagsChange(value: String) =
+        _uiState.update { it.copy(tagsText = value) }
 
     fun save() {
         val current = _uiState.value
@@ -71,23 +78,25 @@ class NoteEditViewModel(
             _uiState.update { it.copy(isSaving = true) }
 
             val now = clock()
-            // TODO [T4.5] Ubah tagsText menjadi tags = parseTags(current.tagsText).
+            val tags = parseTags(current.tagsText)
             val existing = original
             if (existing == null) {
-                // TODO [T3.4] Isi juga updatedAt = now; [T4.5] isi tags.
+                // TODO [T3.4] Isi juga updatedAt = now.
                 repository.insertNote(
                     NoteEntity(
                         title = current.title.trim(),
                         content = current.content.trim(),
-                        createdAt = now
+                        createdAt = now,
+                        tags = tags
                     )
                 )
             } else {
-                // TODO [T3.4] Perbarui updatedAt = now; [T4.5] perbarui tags.
+                // TODO [T3.4] Perbarui updatedAt = now.
                 repository.updateNote(
                     existing.copy(
                         title = current.title.trim(),
-                        content = current.content.trim()
+                        content = current.content.trim(),
+                        tags = tags
                     )
                 )
             }

@@ -73,4 +73,19 @@ class NoteEditViewModelTest {
         assertNotNull(vm.uiState.value.errorMessage)
         assertFalse(vm.uiState.value.isLoading)
     }
+
+    @Test fun `tag diurai saat simpan dan dimuat kembali saat edit`() = runTest {
+        val repo = FakeNoteRepository()
+        val vm = NoteEditViewModel(repo, noteId = 0, clock = { 5_000L })
+
+        vm.onTitleChange("Rencana")
+        vm.onTagsChange("Kuliah, #Ide, kuliah")
+        vm.save(); runCurrent()
+
+        assertEquals(listOf("kuliah", "ide"), repo.current.single().tags)
+
+        val vm2 = NoteEditViewModel(repo, noteId = repo.current.single().id, clock = { 6_000L })
+        runCurrent()
+        assertEquals("kuliah, ide", vm2.uiState.value.tagsText)
+    }
 }

@@ -33,7 +33,7 @@ fun NoteEditScreen(
     uiState: NoteEditUiState,
     onTitleChange: (String) -> Unit,
     onContentChange: (String) -> Unit,
-    // TODO [T4.5] Tambahkan parameter onTagsChange: (String) -> Unit.
+    onTagsChange: (String) -> Unit,
     onSave: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
@@ -95,8 +95,16 @@ fun NoteEditScreen(
 
                 Spacer(Modifier.height(12.dp))
 
-                // TODO [T4.5] Tambahkan OutlinedTextField untuk tag (label "Tag (pisahkan dengan koma)",
-                //   placeholder "kuliah, ide", singleLine) di antara judul dan isi catatan.
+                OutlinedTextField(
+                    value = uiState.tagsText,
+                    onValueChange = onTagsChange,
+                    label = { Text("Tag (pisahkan dengan koma)") },
+                    placeholder = { Text("kuliah, ide") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = uiState.content,

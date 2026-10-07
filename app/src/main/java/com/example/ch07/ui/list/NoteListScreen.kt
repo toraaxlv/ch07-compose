@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,7 +49,7 @@ fun NoteListScreen(
     onDeleteNote: (NoteEntity) -> Unit,
     onUndoDelete: () -> Unit,
     onUndoDismissed: () -> Unit,
-    // TODO [T4.7] Tambahkan parameter onTagSelected: (String?) -> Unit.
+    onTagSelected: (String?) -> Unit,
     onTogglePin: (NoteEntity) -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -89,9 +91,16 @@ fun NoteListScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            // TODO [T4.7] Jika uiState.availableTags tidak kosong, tampilkan baris
-            //   filter chip (LazyRow + FilterChip): "Semua" lalu "#tag" untuk tiap tag;
-            //   chip terpilih = uiState.selectedTag; ketuk -> onTagSelected(...).
+            if (uiState.availableTags.isNotEmpty()) {
+                TagFilterRow(
+                    tags = uiState.availableTags,
+                    selectedTag = uiState.selectedTag,
+                    onTagSelected = onTagSelected,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                )
+            }
 
             when {
                 uiState.isLoading -> Box(
@@ -127,9 +136,9 @@ fun NoteListScreen(
     }
 }
 
-// Pesan kosong dibedakan: belum ada catatan sama sekali vs hasil pencarian kosong
-// TODO [T4.7] Tambahkan cabang untuk filter tag: "Tidak ada catatan dengan tag #..."
+// Pesan kosong dibedakan: belum ada catatan, pencarian kosong, atau filter tag
 private fun emptyMessage(uiState: NoteListUiState): String = when {
+    uiState.selectedTag != null -> "Tidak ada catatan dengan tag #${uiState.selectedTag}"
     !uiState.isFiltering -> "Belum ada catatan. Ketuk + untuk memulai."
     else -> "Tidak ada catatan yang cocok dengan \"${uiState.query}\""
 }
@@ -142,6 +151,36 @@ private fun CenteredMessage(text: String) {
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(24.dp)
         )
+    }
+}
+
+// Baris filter tag: "Semua" lalu "#tag" untuk tiap tag yang dipakai catatan
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TagFilterRow(
+    tags: List<String>,
+    selectedTag: String?,
+    onTagSelected: (String?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        item {
+            FilterChip(
+                selected = selectedTag == null,
+                onClick = { onTagSelected(null) },
+                label = { Text("Semua") }
+            )
+        }
+        items(tags) { tag ->
+            FilterChip(
+                selected = tag == selectedTag,
+                onClick = { onTagSelected(tag) },
+                label = { Text("#$tag") }
+            )
+        }
     }
 }
 
